@@ -1,14 +1,11 @@
 #include "core/game.h"
 #include "core/grid.h"
+#include "reasing.h"
 #include <raylib.h>
 #include <stdlib.h>
+#include <string.h>
 
-// static const Color COLORS[] = {
-//     DARKGRAY,  MAROON, ORANGE, DARKGREEN, DARKBLUE, DARKPURPLE, DARKBROWN,
-//     GRAY,      RED,    GOLD,   LIME,      BLUE,     VIOLET,     BROWN,
-//     LIGHTGRAY, PINK,   YELLOW, GREEN,     SKYBLUE,  PURPLE,     BEIGE};
 static const Color COLORS[] = {
-    LIGHTGRAY,
     BEIGE,  GREEN,  SKYBLUE, PURPLE,    RED,      GOLD,       LIME,      BLUE,
     VIOLET, MAROON, ORANGE,  DARKGREEN, DARKBLUE, DARKPURPLE, DARKBROWN,
 };
@@ -20,11 +17,22 @@ Color GetTileColor(uint64_t number) {
     return LIGHTGRAY;
   }
   int i = -1;
-  while (number) {
+  while (number >>= 1) {
     ++i;
-    number >>= 1;
   }
   return COLORS[i % MAX_COLORS_COUNT];
+}
+
+const float gap = 10.0f;
+const float offsetY = 120.0f;
+const float margin = 20.0f;
+
+static inline Vector2 GetTilePosition(float tileSize, int index,
+                                      uint8_t gridSize) {
+  Vector2 pos = {0};
+  pos.x = margin + tileSize * (index % gridSize) + gap * (index % gridSize);
+  pos.y = offsetY + tileSize * (index / gridSize) + gap * (index / gridSize);
+  return pos;
 }
 
 int main(void) {
@@ -32,12 +40,12 @@ int main(void) {
   //--------------------------------------------------------------------------------------
   const int screenWidth = 640;
   const int screenHeight = 960;
+  int framesCounter = 0;
 
   InitWindow(screenWidth, screenHeight, "r2048");
 
   SetTargetFPS(60); // Set our game to run at 60 frames-per-second
   //--------------------------------------------------------------------------------------
-
   const char txtMoves[] = "Moves";
   const int txtMovesSize = 16;
   const int txtMovesWidth = MeasureText(txtMoves, txtMovesSize);
@@ -53,18 +61,18 @@ int main(void) {
   int txtTileWidth = 0;
 
   Game game;
-  GameInit(&game, 4);
+  GameInit(&game, 2);
+  bool gameOver = false;
   const uint8_t gridSize = game->grid->size;
   const uint16_t gridLength = game->grid->length;
   Rectangle *tiles = (Rectangle *)calloc(gridLength, sizeof(Rectangle));
-  const float gap = 10.0f;
-  const float offsetY = 120.0f;
-  const float margin = 20.0f;
+
   const float tileSize =
-      ((float)GetScreenWidth() - (margin * 2)) / gridSize - (gap / 2);
+      (((float)GetScreenWidth() - (margin * 2)) / gridSize) - (gap / 2);
   for (int i = 0; i < gridLength; ++i) {
-    tiles[i].x = margin + tileSize * (i % gridSize) + gap * (i % gridSize);
-    tiles[i].y = offsetY + tileSize * (i / gridSize) + gap * (i / gridSize);
+    Vector2 pos = GetTilePosition(tileSize, i, gridSize);
+    tiles[i].x = pos.x;
+    tiles[i].y = pos.y;
     tiles[i].width = tileSize;
     tiles[i].height = tileSize;
   }
@@ -73,6 +81,14 @@ int main(void) {
   {
     // Update
     //----------------------------------------------------------------------------------
+    ++framesCounter;
+    if (gameOver) {
+        if (IsKeyPressed(KEY_ENTER)) {
+            GameFree(&game);
+            GameInit(&game, 2);
+            gameOver = false;
+        }
+    }
     if (GridAnyCellAvailable(game->grid) || GameTileMatchesAvailable(game)) {
       int direction = -1;
       if (IsKeyPressed(KEY_LEFT)) {
@@ -92,14 +108,13 @@ int main(void) {
         }
       }
     } else {
-      // Game over
+      gameOver = true;
     }
     //----------------------------------------------------------------------------------
 
     // Draw
     //----------------------------------------------------------------------------------
     BeginDrawing();
-
     ClearBackground(RAYWHITE);
     const char *txtScore = TextFormat(txtScoreFormat, game->score);
     txtScoreWidth = MeasureText(txtScore, txtScoreSize);
@@ -118,12 +133,13 @@ int main(void) {
 
     for (int i = 0; i < gridLength; ++i) // Draw all rectangles
     {
+      Rectangle bgTile = tiles[i];
+      DrawRectangleRec(bgTile, LIGHTGRAY); // Draw background tile
       DrawRectangleRec(tiles[i], GetTileColor(game->grid->cells[i]));
       if (game->grid->cells[i] == 0) {
         continue;
       }
-      char txtTile[24];
-      sprintf(txtTile, txtTileFormat, game->grid->cells[i]);
+      const char *txtTile = TextFormat(txtTileFormat, game->grid->cells[i]);
       while (MeasureText(txtTile, txtTileSize) > (int)tiles[i].width) {
         --txtTileSize;
       }
@@ -134,7 +150,44 @@ int main(void) {
           (int)(tiles[i].y + (tiles[i].height - (float)txtTileSize) / 2);
       DrawText(txtTile, txtTileX, txtTileY, txtTileSize, RAYWHITE);
     }
+    if (gameOver) {
+      const char *txtGameOver = "Game Over!";
+      const int txtGameOverSize = 54;
+      const int txtGameOverWidth = MeasureText(txtGameOver, txtGameOverSize);
+      const char *txtTryAgain = "Press [Enter] to try again";
+      const int txtTryAgainSize = 20;
+      const int txtTryAgainWidth = MeasureText(txtTryAgain, txtTryAgainSize);
 
+      const Vector2 firstTilePos = GetTilePosition(tileSize, 0, gridSize);
+      Vector2 lastTilePos = GetTilePosition(tileSize, gridLength - 1, gridSize);
+      lastTilePos.x += tileSize + gap;
+      lastTilePos.y += tileSize + gap;
+      const Vector2 txtGameOverPos = {
+          (GetScreenWidth() - txtGameOverWidth) / 2.0f,
+          firstTilePos.y + ((lastTilePos.y - firstTilePos.y) / 2.0f) -
+              ((txtGameOverSize / 2.0f) + (txtTryAgainSize / 2.0f) + 5),
+      };
+      const Vector2 txtTryAgainPos = {
+          (GetScreenWidth() - txtTryAgainWidth) / 2.0f,
+          txtGameOverPos.y + txtGameOverSize + 10,
+      };
+
+      Rectangle bg = {txtGameOverPos.x - 20, txtGameOverPos.y - 20,
+                      txtGameOverWidth + 40, txtGameOverSize + 10 + txtTryAgainSize + 40};
+      DrawRectangleRec(
+          (Rectangle){
+              bg.x + 6,
+              bg.y + 6,
+              bg.width,
+              bg.height,
+          },
+          BLACK);
+      DrawRectangleRec(bg, RAYWHITE);
+      DrawRectangleRec(bg, Fade(RED, 0.3f));
+      DrawRectangleLinesEx(bg, 4, RED);
+      DrawText(txtGameOver, txtGameOverPos.x, txtGameOverPos.y, txtGameOverSize, RED);
+      DrawText(txtTryAgain, txtTryAgainPos.x, txtTryAgainPos.y, txtTryAgainSize, GRAY);
+    }
     EndDrawing();
     //----------------------------------------------------------------------------------
   }

@@ -64,7 +64,7 @@ bool GameMove(Game game, Direction direction) {
   return moved;
 }
 
-bool GameAddRandomTile(Game game) {
+int GameAddRandomTile(Game game) {
   random_engine_t *re = game->re;
   Grid grid = game->grid;
   uint8_t len = grid->length;
@@ -72,14 +72,14 @@ bool GameAddRandomTile(Game game) {
   uint16_t available[len];
   uint16_t n_available = GridGetAvailableCells(game->grid, available, len);
   if (n_available == 0) {
-    return false;
+    return -1;
   }
 
   uint16_t index = available[uniform_int_distribution(re, 0, n_available - 1)];
   grid->cells[index] = bernoulli_distribution(re, 0.9)
                            ? 2
                            : 4; // 90% chance of 2, 10% chance of 4
-  return true;
+  return index;
 }
 
 static inline void ArrayErase(uint16_t *array, uint8_t len, uint8_t index) {

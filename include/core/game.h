@@ -44,9 +44,9 @@ bool GameMove(Game game, Direction direction);
  * Add a random tile to the game
  *
  * @param[in] game game to add the tile to
- * @return true if the tile was added, false otherwise
+ * @return index of inserted tile, -1 if no cell available
  */
-bool GameAddRandomTile(Game game);
+int GameAddRandomTile(Game game);
 
 /**
  * Add a given number of random tiles to the game
