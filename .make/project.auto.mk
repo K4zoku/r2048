@@ -28,7 +28,9 @@ ifeq ($(TYPE),lib)
         endif
     endif
 else ifeq ($(TYPE),bin)
-    TARGET:=$(NAME)
+    TARGET:=$(BINARY_DIRECTORY)/$(NAME)
+    MAIN_OBJ:=$(patsubst $(SOURCE_DIRECTORY)/%.c,$(OBJECT_DIRECTORY)/%.o,$(SOURCE_DIRECTORY)/$(MAIN_SRC))
+    OBJ_WITHOUT_MAIN=$(filter-out $(MAIN_OBJ),$(OBJ))
     ifdef BIN_EXT
         TARGET:=$(TARGET).$(BIN_EXT)
     endif
@@ -75,27 +77,28 @@ ifeq ($(TYPE),lib)
     TEST_LDLIBS:=-l$(NAME) $(TEST_LDLIBS)
 endif
 
-$(OBJ): $(SRC)
+$(OBJECT_DIRECTORY)/%.o: $(SOURCE_DIRECTORY)/%.c
 	@mkdir -p $(@D)
 	$(CC) $(CPPFLAGS) $(CFLAGS) -c -o $@ $<
 
 $(TARGET): $(OBJ)
 	@mkdir -p $(@D)
+	@echo "*** Building target '$(notdir $@)'..."
 	$(CC) $(CPPFLAGS) $(CFLAGS) $(LDFLAGS) -o $@ $^ $(LDLIBS)
+	@echo "*** Target '$(notdir $@)' built successfully."
 
 $(OBJECT_DIRECTORY)/%.o: $(TEST_DIRECTORY)/%.c
 	@mkdir -p $(@D)
 	$(CC) $(TEST_CPPFLAGS) $(TEST_CFLAGS) -c -o $@ $<
 
-
 $(TEST_BINARY_DIRECTORY)/%: $(OBJECT_DIRECTORY)/%.o
 	@mkdir -p $(@D)
-	@echo "Building test '$(notdir $<)'..."
-	$(CC) $(TEST_CPPFLAGS) $(TEST_CFLAGS) $(TEST_LDFLAGS) -o $@ $(OBJECT_DIRECTORY)/$*.o $(TEST_LDLIBS)
+	@echo "*** Building test '$(notdir $<)'..."
+	$(CC) $(TEST_CPPFLAGS) $(TEST_CFLAGS) $(TEST_LDFLAGS) -o $@ $< $(OBJ_WITHOUT_MAIN) $(TEST_LDLIBS)
 
 ifeq ($(TYPE),bin)
 run: $(TARGET)
-	@echo "Executing '$(notdir $<)'..."
+	@echo "*** Executing '$(notdir $<)'..."
 	@$(abspath $<)
 
 IMPLICIT_PHONY+=run
@@ -107,11 +110,11 @@ tests: $(TEST_OBJ) $(TEST_BIN)
 IMPLICIT_PHONY+=tests
 
 test_%: $(TEST_BINARY_DIRECTORY)/%
-	@echo "Running test '$(notdir $<)'..."
+	@echo "*** Running test '$(notdir $<)'..."
 	@$(abspath $<)
-	@echo "Test '$(notdir $<)' passed."
+	@echo "*** Test '$(notdir $<)' passed."
 
-test: $(patsubst $(TEST_BINARY_DIRECTORY)/%,test_%,$(TEST_BIN))
+test: $(OBJ_WITHOUT_MAIN) $(patsubst $(TEST_BINARY_DIRECTORY)/%,test_%,$(TEST_BIN))
 
 IMPLICIT_PHONY+=test
 
@@ -120,16 +123,50 @@ ifeq ($(ENABLE_COVERAGE),1)
 GCNO:=$(OBJ:.o=.gcno) $(TEST_OBJ:.o=.gcno)
 GCDA:=$(patsubst %.gcno,%.gcda,$(GCNO))
 
-coverage: $(GCDA)
-	$(COV) --stdout $(GCDA) > $(COVERAGE_TARGET)
+$(COVERAGE_TARGET): $(GCDA)
+	@echo "*** Collating coverage report..."
+	$(COV) --stdout $^ > $@
 
 $(GCDA): $(GCNO)
 
 $(GCNO): $(OBJ) $(TEST_OBJ)
 
+coverage: test $(COVERAGE_TARGET)
+	@echo "*** Done collating coverage report."
+
 clean_coverage:
-	$(RM) $(GCNO) $(GCDA)
+	$(RM) $(GCNO) $(GCDA) $(COVERAGE_TARGET)
+
+CLEAN_TARGETS+=clean_coverage
 
 IMPLICIT_PHONY+=coverage clean_coverage
 
+docs: coverage
+	doxide build --coverage $(COVERAGE_TARGET)
+
+else
+
+docs:
+	doxide build
+
 endif
+IMPLICIT_PHONY+=docs
+
+info: project_info platform_info
+
+build: $(TARGET)
+
+clean_target:
+	$(RM) $(OBJ) $(TARGET)
+
+clean_tests:
+	$(RM) $(TEST_OBJ) $(TEST_BIN)
+
+clean_docs:
+	doxide clean
+
+CLEAN_TARGETS+=clean_target clean_tests clean_docs
+
+clean: $(CLEAN_TARGETS)
+
+IMPLICIT_PHONY+=info build clean clean_tests clean_docs

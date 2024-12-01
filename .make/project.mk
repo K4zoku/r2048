@@ -4,10 +4,14 @@
 # ------------------------- #
 
 # Name of the project
-NAME:=template
+NAME:=r2048
 
 # Output type, either `bin` or `lib`
-TYPE:=lib
+TYPE:=bin
+
+# Source file containing the main function. The path is relative to the SOURCE_DIRECTORY.
+# Required when TYPE is `bin`, ignored when TYPE is `lib`.
+MAIN_SRC:=main.c
 
 # Build profile, either `DEBUG` or `RELEASE`
 BUILD_PROFILE:=DEBUG
@@ -53,7 +57,7 @@ TEST_BINARY_DIRECTORY:=$(BUILD_DIRECTORY)/$(TEST_DIRECTORY)
 CC:=clang
 
 # Compiler flags
-CFLAGS:=-ansi -pedantic
+CFLAGS:=-std=c99
 
 # Preprocessor flags
 CPPFLAGS:=-Wall -Wextra
@@ -62,7 +66,7 @@ CPPFLAGS:=-Wall -Wextra
 LDFLAGS:=
 
 # Libraries to link
-LDLIBS:=
+LDLIBS:=-lm -lraylib
 
 # ------------------- #
 # DEBUG CONFIGURATION #
@@ -116,13 +120,13 @@ RELEASE_LDLIBS:=
 TEST_CFLAGS:=$(DEBUG_CFLAGS)
 
 # Test preprocessor flags
-TEST_CPPFLAGS:=
+TEST_CPPFLAGS:=-I$(INCLUDE_DIRECTORY)
 
 # Test linker flags
 TEST_LDFLAGS:=
 
 # Test libraries to link
-TEST_LDLIBS:=
+TEST_LDLIBS:=-lm
 
 # ---------------------- #
 # COVERAGE CONFIGURATION #

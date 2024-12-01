@@ -1,6 +1,5 @@
-title: Template
-description: C Library project template
+title: r2048
+description: 2048 game implementation in C using raylib
 files:
   - "**/*.h"
   - "**/*.c"
-coverage: build/coverage.gcov

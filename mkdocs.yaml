@@ -1,6 +1,6 @@
-site_name: Template
-site_url: https://k4zoku.github.io/kolle/
-repo_url: https://github.com/
+site_name: r2048
+site_url: https://k4zoku.github.io/r2048/
+repo_url: https://github.com/K4zoku/r2048
 
 extra:
   social:
@@ -41,7 +41,7 @@ theme:
         icon: material/brightness-4
         name: Switch to system preference
   icon:
-    logo: material/library-shelves
+    logo: material/grid
     repo: material/github
 markdown_extensions:
   - def_list
