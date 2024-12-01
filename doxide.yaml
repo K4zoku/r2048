@@ -1,0 +1,6 @@
+title: Template
+description: C Library project template
+files:
+  - "**/*.h"
+  - "**/*.c"
+coverage: build/coverage.gcov
