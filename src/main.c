@@ -1,9 +1,9 @@
 #include "core/game.h"
 #include "core/grid.h"
+#include "random.h"
 #include "reasing.h"
 #include <raylib.h>
 #include <stdlib.h>
-#include <string.h>
 
 static const Color COLORS[] = {
     BEIGE,  GREEN,  SKYBLUE, PURPLE,    RED,      GOLD,       LIME,      BLUE,
@@ -44,7 +44,7 @@ int main(void) {
 
   InitWindow(screenWidth, screenHeight, "r2048");
 
-  SetTargetFPS(60); // Set our game to run at 60 frames-per-second
+  SetTargetFPS(GetMonitorRefreshRate(GetCurrentMonitor())); // Set our game to run at monitor refresh rate
   //--------------------------------------------------------------------------------------
   const char txtMoves[] = "Moves";
   const int txtMovesSize = 16;
@@ -61,14 +61,14 @@ int main(void) {
   int txtTileWidth = 0;
 
   Game game;
-  GameInit(&game, 2);
+  GameInit(&game, 4);
   bool gameOver = false;
   const uint8_t gridSize = game->grid->size;
   const uint16_t gridLength = game->grid->length;
   Rectangle *tiles = (Rectangle *)calloc(gridLength, sizeof(Rectangle));
 
   const float tileSize =
-      (((float)GetScreenWidth() - (margin * 2)) / gridSize) - (gap / 2);
+      (((float)GetScreenWidth() - (margin * 2) - (gap * (gridSize - 1))) / gridSize);
   for (int i = 0; i < gridLength; ++i) {
     Vector2 pos = GetTilePosition(tileSize, i, gridSize);
     tiles[i].x = pos.x;
@@ -85,7 +85,7 @@ int main(void) {
     if (gameOver) {
         if (IsKeyPressed(KEY_ENTER)) {
             GameFree(&game);
-            GameInit(&game, 2);
+            GameInit(&game, 4);
             gameOver = false;
         }
     }
@@ -101,6 +101,7 @@ int main(void) {
         direction = DOWN;
       }
       if (direction != -1) {
+
         bool moved = GameMove(game, direction);
         if (moved) {
           GameAddRandomTile(game);
@@ -130,6 +131,7 @@ int main(void) {
     DrawText(txtMoves, 20, 20, txtMovesSize, GRAY);
     DrawText(txtMovesCount, 20 + (txtMovesWidth - txtMovesCountWidth) / 2,
              20 + txtMovesSize, txtMovesCountSize, GRAY);
+    DrawFPS(GetScreenWidth() - 100, 20);
 
     for (int i = 0; i < gridLength; ++i) // Draw all rectangles
     {
@@ -140,7 +142,7 @@ int main(void) {
         continue;
       }
       const char *txtTile = TextFormat(txtTileFormat, game->grid->cells[i]);
-      while (MeasureText(txtTile, txtTileSize) > (int)tiles[i].width) {
+      while (MeasureText(txtTile, txtTileSize) > (int)tiles[i].width - 4) {
         --txtTileSize;
       }
       txtTileWidth = MeasureText(txtTile, txtTileSize);
