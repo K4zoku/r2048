@@ -3,15 +3,17 @@
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 
-
-uint16_t GetDirectedIndex(Grid grid, Direction direction, uint8_t x, uint8_t y) {
-    int edge, area, a, b;
-    edge = grid->size;
-    area = edge * edge - 1;
-    a = !!(direction & 2);
-    b = direction & 1;
-    return (1 - 2 * a) * (x * (edge * b - b + 1) + b * y + edge * y * (1 - b)) + a * area;
+uint16_t GetDirectedIndex(Grid grid, Direction direction, uint8_t x,
+                          uint8_t y) {
+  int edge, area, a, b;
+  edge = grid->size;
+  area = edge * edge - 1;
+  a = !!(direction & 2);
+  b = direction & 1;
+  return (1 - 2 * a) * (x * (edge * b - b + 1) + b * y + edge * y * (1 - b)) +
+         a * area;
 }
 
 void GameInit(Game *game, uint8_t size) {
@@ -25,12 +27,15 @@ void GameInit(Game *game, uint8_t size) {
   GameAddRandomTiles(*game, 2);
 }
 
-bool GameMove(Game game, Direction direction) {
+bool GameMove(Game game, Direction direction, uint16_t *diff) {
   bool moved = false;
   uint8_t x, y, xx;
   uint16_t index;
   Grid grid = game->grid;
-
+  // Initialize the diff array with the identity mapping
+  for (size_t i = 0; i < grid->length; ++i) {
+    diff[i] = i;
+  }
   for (y = 0; y < grid->size; ++y) {
     uint16_t previous = GetDirectedIndex(grid, direction, 0, y);
     for (x = 1; x < grid->size; ++x) {
@@ -39,9 +44,9 @@ bool GameMove(Game game, Direction direction) {
         if (grid->cells[index] == grid->cells[previous]) {
           grid->cells[previous] <<= 1;
           grid->cells[index] = 0;
-
           game->score += grid->cells[previous];
           moved = true;
+          diff[index] = previous;
         }
         previous = index;
       }
@@ -55,10 +60,20 @@ bool GameMove(Game game, Direction direction) {
             grid->cells[index] = grid->cells[next];
             grid->cells[next] = 0;
             moved = true;
+            diff[next] = index;
             break;
           }
         }
       }
+    }
+  }
+  for (size_t i = 0; i < grid->length; ++i) {
+    if (diff[i] != i) {
+      uint16_t new_index = diff[i];
+      while (diff[new_index] != new_index) {
+        new_index = diff[new_index];
+      }
+      diff[i] = new_index;
     }
   }
   return moved;

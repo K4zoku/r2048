@@ -38,7 +38,7 @@ void GameInit(Game *game, uint8_t size);
  * @param dir direction to move the tiles
  * @return true if the tiles were moved, false otherwise
  */
-bool GameMove(Game game, Direction direction);
+bool GameMove(Game game, Direction direction, uint16_t * diff);
 
 /**
  * Add a random tile to the game
