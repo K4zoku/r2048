@@ -163,7 +163,7 @@ int main(void) {
       DrawRectangleRec(bgTile, LIGHTGRAY); // Draw background tile
       if (moving) {
         ++framesCounter;
-        const int totalFrames = TimeMsToFrames(7000); // 1 second
+        const int totalFrames = TimeMsToFrames(3000); // 1 second
         for (int i = 0; i < gridLength; ++i) {
           uint16_t oldIndex = i;
           uint16_t newIndex = diff[oldIndex];
