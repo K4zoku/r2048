@@ -39,7 +39,7 @@ static inline int GetCurrentRefreshRate(void) {
   return GetMonitorRefreshRate(GetCurrentMonitor());
 }
 static inline int TimeMsToFrames(int ms) {
-  return (float)ms / 1000.0f * GetCurrentRefreshRate();
+  return (float)ms / 1000.0f * (float) GetCurrentRefreshRate();
 }
 
 int main(void) {
@@ -50,10 +50,11 @@ int main(void) {
   int framesCounter = 0;
 
   InitWindow(screenWidth, screenHeight, "r2048");
-
   SetTargetFPS(
       GetCurrentRefreshRate()); // Set our game to run at monitor refresh rate
   //--------------------------------------------------------------------------------------
+  double startTime = GetTime();
+
   const char txtMoves[] = "Moves";
   const int txtMovesSize = 16;
   const int txtMovesWidth = MeasureText(txtMoves, txtMovesSize);
@@ -106,6 +107,7 @@ int main(void) {
         diff = calloc(gridLength, sizeof(uint16_t));
         oldCells = calloc(gridLength, sizeof(uint64_t));
         gameOver = false;
+        startTime = GetTime();
       }
     } else if (moving) {
 
@@ -145,7 +147,12 @@ int main(void) {
     txtScoreWidth = MeasureText(txtScore, txtScoreSize);
     DrawText(txtScore, (GetScreenWidth() - txtScoreWidth) / 2, 20, txtScoreSize,
              GRAY);
-    const char *txtElapsed = "00:00:00";
+    double elapsedTime = GetTime() - startTime;
+    int hours = (int)elapsedTime / 3600;
+    int minutes = ((int)elapsedTime % 3600) / 60;
+    int seconds = (int)elapsedTime % 60;
+    const char *txtElapsedFormat = "%02u:%02u:%02u";
+    const char *txtElapsed = TextFormat(txtElapsedFormat, hours, minutes, seconds);
     const int txtElapsedSize = 20;
     const int txtElapsedWidth = MeasureText(txtElapsed, txtElapsedSize);
     DrawText(txtElapsed, (GetScreenWidth() - txtElapsedWidth) / 2, 70,
@@ -163,7 +170,7 @@ int main(void) {
       DrawRectangleRec(bgTile, LIGHTGRAY); // Draw background tile
       if (moving) {
         ++framesCounter;
-        const int totalFrames = TimeMsToFrames(3000); // 1 second
+        const int totalFrames = TimeMsToFrames(2000); // 1 second
         for (int i = 0; i < gridLength; ++i) {
           uint16_t oldIndex = i;
           uint16_t newIndex = diff[oldIndex];

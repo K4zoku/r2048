@@ -77,7 +77,7 @@ LDLIBS:=-lm -lraylib
 # Those flags will be appended to CFLAGS, CPPFLAGS, LDFLAGS, and LDLIBS.
 
 # Debug compiler flags
-DEBUG_CFLAGS:=-Og
+DEBUG_CFLAGS:=-Og -fsanitize=address,undefined,leak
 
 # Debug preprocessor flags
 DEBUG_CPPFLAGS:=

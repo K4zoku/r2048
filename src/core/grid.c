@@ -1,10 +1,11 @@
 #include "core/grid.h"
+#include <stdint.h>
 #include <stdlib.h>
 
 void GridInit(Grid * grid, uint8_t size) {
-    *grid = malloc(sizeof(Grid));
+    *grid = malloc(sizeof(struct Grid));
     (*grid)->size = size;
-    (*grid)->length = size * size;
+    (*grid)->length = (uint16_t) size * size;
     (*grid)->cells = calloc((*grid)->length, sizeof(uint64_t));
 }
 
