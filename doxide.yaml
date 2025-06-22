@@ -1,5 +1,0 @@
-title: r2048
-description: 2048 game implementation in C using raylib
-files:
-  - "**/*.h"
-  - "**/*.c"
