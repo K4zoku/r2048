@@ -139,7 +139,7 @@ void Update() {
   currentGesture = GetGestureDetected();
   touchPosition = GetTouchPosition(0);
   if (gameOver) {
-    if (IsKeyPressed(KEY_ENTER)) {
+    if (IsKeyPressed(KEY_ENTER) || IsGestureDetected(GESTURE_TAP)) {
       GameFree(&game);
       free(diff);
       free(oldCells);

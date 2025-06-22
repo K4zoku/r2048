@@ -4,7 +4,7 @@
 # ------------------------- #
 
 # Name of the project
-NAME:=index.html
+NAME:=2048.html
 
 # Output type, either `bin` or `lib`
 TYPE:=bin
@@ -80,7 +80,7 @@ CFLAGS:=-std=c99
 CPPFLAGS:=-Wall -Wextra
 
 # Linker flags
-LDFLAGS:=$(EXTERN_DIR)/libraylib.a -I$(RAYLIB_DIR)/src -L$(EXTERN_DIR) -s USE_GLFW=3 
+LDFLAGS:=$(EXTERN_DIR)/libraylib.a -I$(RAYLIB_DIR)/src -L$(EXTERN_DIR) -s USE_GLFW=3 --shell-file $(RAYLIB_DIR)/src/minshell.html
 
 # Libraries to link
 LDLIBS:=-lm
