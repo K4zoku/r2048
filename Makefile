@@ -2,7 +2,9 @@
 
 include .make/project.mk
 
-default: info clean build test
+all: info clean $(EXTERN_DIR)/libraylib.a build
+
+default: all
 
 .PHONY: $(IMPLICIT_PHONY) \
-	default
+	all default

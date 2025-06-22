@@ -79,7 +79,7 @@ endif
 
 $(OBJECT_DIRECTORY)/%.o: $(SOURCE_DIRECTORY)/%.c
 	@mkdir -p $(@D)
-	$(CC) $(CPPFLAGS) $(CFLAGS) -c -o $@ $<
+	$(CC) $(CPPFLAGS) $(CFLAGS) $(LDFLAGS) -c -o $@ $< $(LDLIBS)
 
 $(TARGET): $(OBJ)
 	@mkdir -p $(@D)

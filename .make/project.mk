@@ -4,7 +4,7 @@
 # ------------------------- #
 
 # Name of the project
-NAME:=r2048
+NAME:=index.html
 
 # Output type, either `bin` or `lib`
 TYPE:=bin
@@ -14,7 +14,7 @@ TYPE:=bin
 MAIN_SRC:=main.c
 
 # Build profile, either `DEBUG` or `RELEASE`
-BUILD_PROFILE:=DEBUG
+BUILD_PROFILE:=RELEASE
 
 project_info:
 	@echo "  * Project name: $(NAME)"
@@ -49,12 +49,29 @@ BINARY_DIRECTORY:=$(BUILD_DIRECTORY)/bin
 # Directory containing output test binary files
 TEST_BINARY_DIRECTORY:=$(BUILD_DIRECTORY)/$(TEST_DIRECTORY)
 
+RAYLIB_DIR = vendor/raylib
+RAYLIB_MODULES = rcore rshapes rtextures rtext rmodels raudio utils
+EXTERN_DIR = extern
+
+$(EXTERN_DIR)/libraylib.a:
+	mkdir -p $(EXTERN_DIR)
+	# Compile each module separately
+	$(foreach module,$(RAYLIB_MODULES),  \
+		emcc -c $(RAYLIB_DIR)/src/$(module).c  -o $(EXTERN_DIR)/$(module).o  -Os -Wall -DPLATFORM_WEB -DGRAPHICS_API_OPENGL_ES2; \
+	)
+	
+	# Link all modules together
+	emar rcs $(EXTERN_DIR)/libraylib.a $(foreach module,$(RAYLIB_MODULES),  $(EXTERN_DIR)/$(module).o)
+	
+	# Delete all the module .o files that were generated during compilation
+	rm $(foreach module,$(RAYLIB_MODULES),  $(EXTERN_DIR)/$(module).o)
+
 # ---------------------- #
 # COMPILER CONFIGURATION #
 # ---------------------- #
 
 # Compiler to use
-CC:=clang
+CC:=emcc
 
 # Compiler flags
 CFLAGS:=-std=c99
@@ -63,10 +80,10 @@ CFLAGS:=-std=c99
 CPPFLAGS:=-Wall -Wextra
 
 # Linker flags
-LDFLAGS:=
+LDFLAGS:=$(EXTERN_DIR)/libraylib.a -I$(RAYLIB_DIR)/src -L$(EXTERN_DIR) -s USE_GLFW=3 
 
 # Libraries to link
-LDLIBS:=-lm -lraylib
+LDLIBS:=-lm
 
 # ------------------- #
 # DEBUG CONFIGURATION #
@@ -83,7 +100,7 @@ DEBUG_CFLAGS:=-Og -fsanitize=address,undefined,leak
 DEBUG_CPPFLAGS:=
 
 # Debug linker flags
-DEBUG_LDFLAGS:=
+DEBUG_LDFLAGS:=$(EXTERN_DIR)/libraylib.a -I$(RAYLIB_DIR)/src
 
 # Debug libraries to link
 DEBUG_LDLIBS:=
